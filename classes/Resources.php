@@ -40,23 +40,23 @@ class Resources {
 
 			// use last-modified time as etag; etag must be quoted
 			$etag = '"' . filemtime($filename) . '"';
-			if ($echo)
-			{
-				// check headers for matching etag; if etag hasn't changed, use the cached version
-				if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag) {
-					header('HTTP/1.0 304 Not Modified');
-					return;
-				}
 
-				header('Etag: ' . $etag);
-
-				// cache file for at most 30 days
-				header('Cache-control: max-age=2592000');
-
-				// output resource
-				header('Content-type: ' . $res['mime']);
+		if ($echo) {
+			// check headers for matching etag; if etag hasn't changed, use the cached version
+			if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag) {
+				header('HTTP/1.0 304 Not Modified');
+				return;
 			}
-			
+
+			header('Etag: ' . $etag);
+
+			// cache file for at most 30 days
+			header('Cache-control: max-age=2592000');
+
+			// output resource
+			header('Content-type: ' . $res['mime']);
+		}
+
 			$result = '';
 			if (isset($data)) {
 				if (isset($res['base64'])) {
@@ -76,3 +76,4 @@ class Resources {
 	}
 
 }
+
