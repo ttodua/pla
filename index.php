@@ -1,10 +1,12 @@
 <?php
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//there is no reason for the average user to edit anything below this comment
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if (version_compare(phpversion(), '5.2.4', '<')) {
 	die('Your PHP version is PHP '.phpversion().', which is too old. You need at least PHP 5.2.4.');
+}
+
+if(strpos(ini_get('variables_order'),'G') === false || strpos(ini_get('variables_order'),'P') === false ||
+   strpos(ini_get('variables_order'),'C') === false || strpos(ini_get('variables_order'),'S') === false) {
+	die('The php configuration <em>variables_order</em> needs to include G, P, C and S. The current value is "'.ini_get('variables_order').'". Please check the php configuration (php.ini).');
 }
 
 # REMOVE_FROM_BUILD
@@ -38,7 +40,7 @@ if (is_readable($config_filename))
 //constants 1
 define("PROJECT", "phpLiteAdmin");
 define("VERSION", "1.9.9-dev");
-define("FORCETYPE", false); //force the extension that will be used (set to false in almost all circumstances except debugging)
+define("FORCETYPE", false); //force the extension that will be used (set to false in almost all circumstances except debugging, possible values: false, "PDO", "SQLite3", "SQLiteDatabase")
 define("SYSTEMPASSWORD", $password); // Makes things easier.
 define('PROJECT_URL','https://www.phpliteadmin.org/');
 define('DONATE_URL','https://www.phpliteadmin.org/donate/');
@@ -62,7 +64,10 @@ if (isset($_GET['resource']))
 
 // don't mess with this - required for the login session
 ini_set('session.cookie_httponly', '1');
-session_start();
+if(!session_start())
+{
+	die("Could not start a new session. Check your php setup regarding sessions.");
+}
 
 // version-number added so after updating, old session-data is not used anylonger
 // cookies names cannot contain symbols, except underscores
@@ -96,9 +101,9 @@ if($language != 'en') {
 // stripslashes if MAGIC QUOTES is turned on
 // This is only a workaround. Please better turn off magic quotes!
 // This code is from http://php.net/manual/en/security.magicquotes.disabling.php
-if (get_magic_quotes_gpc()) {
+if (is_callable('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
 	$process = array(&$_GET, &$_POST, &$_COOKIE, &$_REQUEST);
-	while (list($key, $val) = each($process)) {
+	foreach($process as $key => $val) {
 		foreach ($val as $k => $v) {
 			unset($process[$key][$k]);
 			if (is_array($v)) {
@@ -1454,7 +1459,7 @@ ob_end_clean();
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php echo $language; ?>" lang="<?php echo $language; ?>">
 <head>
 <!-- Copyright <?php echo date("Y").' '.PROJECT.' ('.PROJECT_URL.')'; ?> -->
 <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
@@ -1582,7 +1587,7 @@ if(!$auth->isAuthorized())
 if(count($databases)==0) // the database array is empty, offer to create a new database
 {
 	//- HTML: form to create a new database, exit
-	if($directory!==false && is_writable($directory))
+	if($directory!==false && is_writable($directory) && (is_executable($directory) || DIRECTORY_SEPARATOR === '\\'))
 	{
 		echo "<div class='confirm' style='margin:20px;'>";
 		printf($lang['no_db'], PROJECT, PROJECT);
@@ -1609,7 +1614,7 @@ if(count($databases)==0) // the database array is empty, offer to create a new d
 		echo "</form>";
 		echo "</fieldset>";
 	}
-	elseif(($directory!==false && !is_executable($directory)))
+	elseif($directory!==false && !is_executable($directory) && DIRECTORY_SEPARATOR === '/')
 	{
 		echo "<div class='confirm' style='margin:20px;'>";
 		echo $lang['err'].": ".sprintf($lang['dir_not_executable'], PROJECT, $directory);

@@ -3,12 +3,13 @@
 # INCLUDE docs/header.txt | comment_lines
 # INCLUDE phpliteadmin.config.sample.php
 # INCLUDE languages/lang_en.php
+# INCLUDE docs/noedit.txt | comment_lines
+
+# Include all class files
+# INCLUDE classes/*.php
 
 # Load the main phpLiteAdmin source file
 # INCLUDE index.php
-
-# Append all class files
-# INCLUDE classes/*.php
 
 # Embed resources: embed file info this function, actual data below
 
